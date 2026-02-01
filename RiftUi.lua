@@ -318,6 +318,7 @@ function Rift:CreateWindow(options)
     
     -- Tab Container
     local TabContainer = CreateRoundedFrame(MainFrame, UDim2.new(0, 150, 1, -55), UDim2.new(0, 10, 0, 50), Theme.Secondary, 8)
+    TabContainer.ClipsDescendants = false
     
     local TabList = Instance.new("UIListLayout")
     TabList.Padding = UDim.new(0, 5)
@@ -333,6 +334,14 @@ function Rift:CreateWindow(options)
     
     -- Content Container
     local ContentContainer = CreateRoundedFrame(MainFrame, UDim2.new(1, -180, 1, -55), UDim2.new(0, 170, 0, 50), Theme.Secondary, 8)
+    ContentContainer.ClipsDescendants = false
+    
+    local ContentPadding = Instance.new("UIPadding")
+    ContentPadding.PaddingTop = UDim.new(0, 5)
+    ContentPadding.PaddingBottom = UDim.new(0, 5)
+    ContentPadding.PaddingLeft = UDim.new(0, 5)
+    ContentPadding.PaddingRight = UDim.new(0, 5)
+    ContentPadding.Parent = ContentContainer
     
     -- Dragging
     local dragging, dragInput, dragStart, startPos
@@ -395,6 +404,7 @@ function Rift:CreateWindow(options)
         Tab.Elements = {}
         
         local TabButton = CreateRoundedFrame(TabContainer, UDim2.new(1, -20, 0, 35), UDim2.new(0, 0, 0, 0), Theme.Background, 6)
+        TabButton.ZIndex = 2
         
         local TabLabel = Instance.new("TextLabel")
         TabLabel.Size = UDim2.new(1, -10, 1, 0)
@@ -405,22 +415,26 @@ function Rift:CreateWindow(options)
         TabLabel.Font = Enum.Font.GothamSemibold
         TabLabel.TextSize = 13
         TabLabel.TextXAlignment = Enum.TextXAlignment.Left
+        TabLabel.ZIndex = 3
         TabLabel.Parent = TabButton
         
         local TabDetector = Instance.new("TextButton")
         TabDetector.Size = UDim2.new(1, 0, 1, 0)
         TabDetector.BackgroundTransparency = 1
         TabDetector.Text = ""
+        TabDetector.ZIndex = 4
         TabDetector.Parent = TabButton
         
         local TabContent = Instance.new("ScrollingFrame")
-        TabContent.Size = UDim2.new(1, 0, 1, 0)
+        TabContent.Size = UDim2.new(1, -10, 1, -10)
+        TabContent.Position = UDim2.new(0, 5, 0, 5)
         TabContent.BackgroundTransparency = 1
         TabContent.BorderSizePixel = 0
         TabContent.ScrollBarThickness = 4
         TabContent.ScrollBarImageColor3 = Theme.Accent
         TabContent.Visible = false
         TabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+        TabContent.ZIndex = 2
         TabContent.Parent = ContentContainer
         
         local TabContentList = Instance.new("UIListLayout")
