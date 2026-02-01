@@ -1,7 +1,7 @@
 --[[
     Rift UI Library
     Created by: Cxrter
-    I like Poutine
+    Ashton is gay
     A professional, customizable UI library for Roblox
 ]]
 
@@ -723,7 +723,7 @@ function Rift:CreateWindow(options)
             }
         end
         
-        -- Dropdown
+        -- Dropdown (FIXED VERSION)
         function Tab:CreateDropdown(options)
             local dropdownText = options.Name or "Dropdown"
             local items = options.Options or {}
@@ -770,9 +770,14 @@ function Rift:CreateWindow(options)
             DropdownArrow.TextSize = 10
             DropdownArrow.Parent = DropdownDisplay
             
-            local DropdownList = CreateRoundedFrame(DropdownFrame, UDim2.new(0.45, 0, 0, 0), UDim2.new(0.55, -5, 1, 5), Theme.Secondary, 4)
+            -- FIXED: Parent to MainFrame instead of DropdownFrame
+            local DropdownList = CreateRoundedFrame(MainFrame, 
+                UDim2.new(0, 0, 0, 0), 
+                UDim2.new(0, 0, 0, 0), 
+                Theme.Secondary, 4
+            )
             DropdownList.Visible = false
-            DropdownList.ZIndex = 10
+            DropdownList.ZIndex = 15                    -- Higher than normal elements
             DropdownList.ClipsDescendants = true
             
             local DropdownScroll = Instance.new("ScrollingFrame")
@@ -818,7 +823,7 @@ function Rift:CreateWindow(options)
                         currentOption = item
                         DropdownValue.Text = item
                         isOpen = false
-                        CreateTween(DropdownList, {Size = UDim2.new(0.45, 0, 0, 0)}, 0.2)
+                        CreateTween(DropdownList, {Size = UDim2.new(0, DropdownDisplay.AbsoluteSize.X, 0, 0)}, 0.2)
                         task.wait(0.2)
                         DropdownList.Visible = false
                         CreateTween(DropdownArrow, {Rotation = 0}, 0.2)
@@ -846,13 +851,24 @@ function Rift:CreateWindow(options)
             
             DropdownDetector.MouseButton1Click:Connect(function()
                 isOpen = not isOpen
+                
                 if isOpen then
+                    -- Position dropdown list using absolute coordinates
+                    local absPos = DropdownDisplay.AbsolutePosition
+                    local absSize = DropdownDisplay.AbsoluteSize
+                    local mainAbsPos = MainFrame.AbsolutePosition
+                    
+                    DropdownList.Position = UDim2.new(
+                        0, absPos.X - mainAbsPos.X,
+                        0, absPos.Y - mainAbsPos.Y + absSize.Y + 4
+                    )
+                    
                     DropdownList.Visible = true
                     local listHeight = math.min(#items * 27, 150)
-                    CreateTween(DropdownList, {Size = UDim2.new(0.45, 0, 0, listHeight)}, 0.2)
+                    CreateTween(DropdownList, {Size = UDim2.new(0, absSize.X, 0, listHeight)}, 0.2)
                     CreateTween(DropdownArrow, {Rotation = 180}, 0.2)
                 else
-                    CreateTween(DropdownList, {Size = UDim2.new(0.45, 0, 0, 0)}, 0.2)
+                    CreateTween(DropdownList, {Size = UDim2.new(0, DropdownDisplay.AbsoluteSize.X, 0, 0)}, 0.2)
                     task.wait(0.2)
                     DropdownList.Visible = false
                     CreateTween(DropdownArrow, {Rotation = 0}, 0.2)
