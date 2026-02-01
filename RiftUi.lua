@@ -971,3 +971,72 @@ function Rift:CreateWindow(options)
 end
 
 return Rift
+    KeyLabel.Size = UDim2.new(1, 0, 1, 0)
+    KeyLabel.BackgroundTransparency = 1
+    KeyLabel.Text = currentKey.Name
+    KeyLabel.TextColor3 = Theme.Text
+    KeyLabel.Font = Enum.Font.Gotham
+    KeyLabel.TextSize = 12
+    KeyLabel.Parent = KeyDisplay
+    
+    local KeyDetector = Instance.new("TextButton")
+    KeyDetector.Size = UDim2.new(1, 0, 1, 0)
+    KeyDetector.BackgroundTransparency = 1
+    KeyDetector.Text = ""
+    KeyDetector.Parent = KeyDisplay
+    
+    KeyDetector.MouseButton1Click:Connect(function()
+        PlaySound(Sounds.Click)
+        listening = true
+        KeyLabel.Text = "..."
+        CreateTween(KeyDisplay, {BackgroundColor3 = Theme.Accent}, 0.2)
+    end)
+    
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if listening and input.UserInputType == Enum.UserInputType.Keyboard then
+            currentKey = input.KeyCode
+            KeyLabel.Text = input.KeyCode.Name
+            listening = false
+            CreateTween(KeyDisplay, {BackgroundColor3 = Theme.Secondary}, 0.2)
+            
+            if flag then
+                Window.ConfigData[flag] = currentKey
+            end
+        end
+        
+        if not gameProcessed and input.KeyCode == currentKey and not listening then
+            callback(currentKey)
+        end
+    end)
+    
+    KeyDetector.MouseEnter:Connect(function()
+        if not listening then
+            CreateTween(KeyDisplay, {BackgroundColor3 = Theme.Background}, 0.2)
+        end
+    end)
+    
+    KeyDetector.MouseLeave:Connect(function()
+        if not listening then
+            CreateTween(KeyDisplay, {BackgroundColor3 = Theme.Secondary}, 0.2)
+        end
+    end)
+    
+    return {
+        SetValue = function(self, key)
+            currentKey = key
+            KeyLabel.Text = key.Name
+            
+            if flag then
+                Window.ConfigData[flag] = currentKey
+            end
+        end
+    }
+end
+
+        return Tab
+    end
+    
+    return Window
+end
+
+return Rift
