@@ -23,11 +23,11 @@ Rift.__index = Rift
 -- Default Theme (Fully Customizable)
 local DefaultTheme = {
     -- Main Colors
-    Primary = Color3.fromRGB(15, 15, 20),
-    Secondary = Color3.fromRGB(25, 25, 35),
-    Accent = Color3.fromRGB(138, 43, 226), -- Purple accent
-    AccentHover = Color3.fromRGB(158, 63, 246),
-    AccentActive = Color3.fromRGB(118, 23, 206),
+    Primary = Color3.fromRGB(10, 10, 10), -- Black
+    Secondary = Color3.fromRGB(20, 20, 20),
+    Accent = Color3.fromRGB(220, 50, 50), -- Red accent
+    AccentHover = Color3.fromRGB(240, 70, 70),
+    AccentActive = Color3.fromRGB(200, 30, 30),
     
     -- Text Colors
     TextPrimary = Color3.fromRGB(255, 255, 255),
@@ -203,10 +203,8 @@ function Rift:CreateWindow(config)
         IgnoreGuiInset = true
     })
     
-    -- Add Blur Effect
-    if config.Blur ~= false then
-        Window.Blur = Utils:AddBlur(config.BlurIntensity)
-    end
+    -- Add Blur Effect to menu only (not background)
+    -- Background blur removed - only glass effect on menu
     
     -- Main Container
     local mainFrame = Utils:CreateElement("Frame", {
@@ -357,9 +355,6 @@ function Rift:CreateWindow(config)
         
         task.wait(0.3)
         screenGui:Destroy()
-        if Window.Blur then
-            Window.Blur:Destroy()
-        end
     end)
     
     -- Window Methods
@@ -1269,9 +1264,6 @@ function Rift:CreateWindow(config)
     
     function Window:Destroy()
         screenGui:Destroy()
-        if Window.Blur then
-            Window.Blur:Destroy()
-        end
     end
     
     return Window
