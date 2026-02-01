@@ -21,10 +21,7 @@ local Players = game:GetService("Players")
 local Config = {
     -- Valid keys (add your keys here)
    ValidKeys = {
-    "MyScript2024",
-    "PREMIUM-USER-123",
-    "alex-key-2024",
-    "test123"
+    "CxRift"
 },
     
     -- HWID locked keys (optional)
@@ -37,7 +34,7 @@ local Config = {
     KeyLength = 0, -- Expected key length (set to 0 to disable length check)
     MaxAttempts = 5, -- Maximum failed attempts before lockout
     LockoutDuration = 300, -- Lockout duration in seconds (5 minutes)
-    SaveKey = true, -- Save valid key for future sessions
+    SaveKey = false, -- Save valid key for future sessions
     
     -- UI Theme (matches Rift UI)
     Theme = {
@@ -50,8 +47,7 @@ local Config = {
         Error = Color3.fromRGB(255, 80, 80)
     },
     
-    -- Discord/Website links (optional)
-    DiscordLink = "https://discord.gg/yourserver",
+    -- Website link
     KeyLink = "https://yourwebsite.com/getkey"
 }
 
