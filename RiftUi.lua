@@ -1,7 +1,7 @@
 --[[
     Rift UI Library
     Created by: Cxrter
-    
+    I like Poutine
     A professional, customizable UI library for Roblox
 ]]
 
