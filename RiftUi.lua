@@ -1,7 +1,6 @@
 --[[
     Rift UI Library
     Created by: Cxrter
-    Fixed and Cleaned by: Claude
     
     A professional, customizable UI library for Roblox
 ]]
