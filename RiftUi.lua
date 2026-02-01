@@ -1,6 +1,7 @@
 --[[
     Rift UI Library
     Created by: Cxrter
+    Fixed and Cleaned by: Claude
     
     A professional, customizable UI library for Roblox
 ]]
@@ -779,45 +780,49 @@ function Rift:CreateWindow(options)
                 DropdownScroll.CanvasSize = UDim2.new(0, 0, 0, DropdownListLayout.AbsoluteContentSize.Y)
             end)
             
-            for _, item in ipairs(items) do
-                local ItemButton = CreateRoundedFrame(DropdownScroll, UDim2.new(1, -5, 0, 25), UDim2.new(0, 0, 0, 0), Theme.Background, 4)
-                
-                local ItemLabel = Instance.new("TextLabel")
-                ItemLabel.Size = UDim2.new(1, -10, 1, 0)
-                ItemLabel.Position = UDim2.new(0, 5, 0, 0)
-                ItemLabel.BackgroundTransparency = 1
-                ItemLabel.Text = item
-                ItemLabel.TextColor3 = Theme.Text
-                ItemLabel.Font = Enum.Font.Gotham
-                ItemLabel.TextSize = 12
-                ItemLabel.TextXAlignment = Enum.TextXAlignment.Left
-                ItemLabel.Parent = ItemButton
-                
-                local ItemDetector = Instance.new("TextButton")
-                ItemDetector.Size = UDim2.new(1, 0, 1, 0)
-                ItemDetector.BackgroundTransparency = 1
-                ItemDetector.Text = ""
-                ItemDetector.Parent = ItemButton
-                
-                ItemDetector.MouseButton1Click:Connect(function()
-                    currentOption = item
-                    DropdownValue.Text = item
-                    isOpen = false
-                    CreateTween(DropdownList, {Size = UDim2.new(0.45, 0, 0, 0)}, 0.2)
-                    task.wait(0.2)
-                    DropdownList.Visible = false
-                    CreateTween(DropdownArrow, {Rotation = 0}, 0.2)
-                    callback(item)
-                end)
-                
-                ItemDetector.MouseEnter:Connect(function()
-                    CreateTween(ItemButton, {BackgroundColor3 = Theme.Accent}, 0.1)
-                end)
-                
-                ItemDetector.MouseLeave:Connect(function()
-                    CreateTween(ItemButton, {BackgroundColor3 = Theme.Background}, 0.1)
-                end)
+            local function createDropdownItems()
+                for _, item in ipairs(items) do
+                    local ItemButton = CreateRoundedFrame(DropdownScroll, UDim2.new(1, -5, 0, 25), UDim2.new(0, 0, 0, 0), Theme.Background, 4)
+                    
+                    local ItemLabel = Instance.new("TextLabel")
+                    ItemLabel.Size = UDim2.new(1, -10, 1, 0)
+                    ItemLabel.Position = UDim2.new(0, 5, 0, 0)
+                    ItemLabel.BackgroundTransparency = 1
+                    ItemLabel.Text = item
+                    ItemLabel.TextColor3 = Theme.Text
+                    ItemLabel.Font = Enum.Font.Gotham
+                    ItemLabel.TextSize = 12
+                    ItemLabel.TextXAlignment = Enum.TextXAlignment.Left
+                    ItemLabel.Parent = ItemButton
+                    
+                    local ItemDetector = Instance.new("TextButton")
+                    ItemDetector.Size = UDim2.new(1, 0, 1, 0)
+                    ItemDetector.BackgroundTransparency = 1
+                    ItemDetector.Text = ""
+                    ItemDetector.Parent = ItemButton
+                    
+                    ItemDetector.MouseButton1Click:Connect(function()
+                        currentOption = item
+                        DropdownValue.Text = item
+                        isOpen = false
+                        CreateTween(DropdownList, {Size = UDim2.new(0.45, 0, 0, 0)}, 0.2)
+                        task.wait(0.2)
+                        DropdownList.Visible = false
+                        CreateTween(DropdownArrow, {Rotation = 0}, 0.2)
+                        callback(item)
+                    end)
+                    
+                    ItemDetector.MouseEnter:Connect(function()
+                        CreateTween(ItemButton, {BackgroundColor3 = Theme.Accent}, 0.1)
+                    end)
+                    
+                    ItemDetector.MouseLeave:Connect(function()
+                        CreateTween(ItemButton, {BackgroundColor3 = Theme.Background}, 0.1)
+                    end)
+                end
             end
+            
+            createDropdownItems()
             
             local DropdownDetector = Instance.new("TextButton")
             DropdownDetector.Size = UDim2.new(1, 0, 1, 0)
@@ -864,46 +869,7 @@ function Rift:CreateWindow(options)
                             child:Destroy()
                         end
                     end
-                    
-                    for _, item in ipairs(items) do
-                        local ItemButton = CreateRoundedFrame(DropdownScroll, UDim2.new(1, -5, 0, 25), UDim2.new(0, 0, 0, 0), Theme.Background, 4)
-                        
-                        local ItemLabel = Instance.new("TextLabel")
-                        ItemLabel.Size = UDim2.new(1, -10, 1, 0)
-                        ItemLabel.Position = UDim2.new(0, 5, 0, 0)
-                        ItemLabel.BackgroundTransparency = 1
-                        ItemLabel.Text = item
-                        ItemLabel.TextColor3 = Theme.Text
-                        ItemLabel.Font = Enum.Font.Gotham
-                        ItemLabel.TextSize = 12
-                        ItemLabel.TextXAlignment = Enum.TextXAlignment.Left
-                        ItemLabel.Parent = ItemButton
-                        
-                        local ItemDetector = Instance.new("TextButton")
-                        ItemDetector.Size = UDim2.new(1, 0, 1, 0)
-                        ItemDetector.BackgroundTransparency = 1
-                        ItemDetector.Text = ""
-                        ItemDetector.Parent = ItemButton
-                        
-                        ItemDetector.MouseButton1Click:Connect(function()
-                            currentOption = item
-                            DropdownValue.Text = item
-                            isOpen = false
-                            CreateTween(DropdownList, {Size = UDim2.new(0.45, 0, 0, 0)}, 0.2)
-                            task.wait(0.2)
-                            DropdownList.Visible = false
-                            CreateTween(DropdownArrow, {Rotation = 0}, 0.2)
-                            callback(item)
-                        end)
-                        
-                        ItemDetector.MouseEnter:Connect(function()
-                            CreateTween(ItemButton, {BackgroundColor3 = Theme.Accent}, 0.1)
-                        end)
-                        
-                        ItemDetector.MouseLeave:Connect(function()
-                            CreateTween(ItemButton, {BackgroundColor3 = Theme.Background}, 0.1)
-                        end)
-                    end
+                    createDropdownItems()
                 end
             }
         end
@@ -964,75 +930,84 @@ function Rift:CreateWindow(options)
             }
         end
         
-        return Tab
-    end
-    
-    return Window
-end
-
-return Rift
-    KeyLabel.Size = UDim2.new(1, 0, 1, 0)
-    KeyLabel.BackgroundTransparency = 1
-    KeyLabel.Text = currentKey.Name
-    KeyLabel.TextColor3 = Theme.Text
-    KeyLabel.Font = Enum.Font.Gotham
-    KeyLabel.TextSize = 12
-    KeyLabel.Parent = KeyDisplay
-    
-    local KeyDetector = Instance.new("TextButton")
-    KeyDetector.Size = UDim2.new(1, 0, 1, 0)
-    KeyDetector.BackgroundTransparency = 1
-    KeyDetector.Text = ""
-    KeyDetector.Parent = KeyDisplay
-    
-    KeyDetector.MouseButton1Click:Connect(function()
-        PlaySound(Sounds.Click)
-        listening = true
-        KeyLabel.Text = "..."
-        CreateTween(KeyDisplay, {BackgroundColor3 = Theme.Accent}, 0.2)
-    end)
-    
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if listening and input.UserInputType == Enum.UserInputType.Keyboard then
-            currentKey = input.KeyCode
-            KeyLabel.Text = input.KeyCode.Name
-            listening = false
-            CreateTween(KeyDisplay, {BackgroundColor3 = Theme.Secondary}, 0.2)
+        -- Keybind
+        function Tab:CreateKeybind(options)
+            local keybindText = options.Name or "Keybind"
+            local defaultKey = options.Default or Enum.KeyCode.E
+            local callback = options.Callback or function() end
             
-            if flag then
-                Window.ConfigData[flag] = currentKey
-            end
+            local currentKey = defaultKey
+            local listening = false
+            
+            local KeybindFrame = CreateRoundedFrame(TabContent, UDim2.new(1, -20, 0, 35), UDim2.new(0, 0, 0, 0), Theme.Background, 6)
+            
+            local KeybindLabel = Instance.new("TextLabel")
+            KeybindLabel.Size = UDim2.new(0.6, 0, 1, 0)
+            KeybindLabel.Position = UDim2.new(0, 10, 0, 0)
+            KeybindLabel.BackgroundTransparency = 1
+            KeybindLabel.Text = keybindText
+            KeybindLabel.TextColor3 = Theme.Text
+            KeybindLabel.Font = Enum.Font.GothamSemibold
+            KeybindLabel.TextSize = 13
+            KeybindLabel.TextXAlignment = Enum.TextXAlignment.Left
+            KeybindLabel.Parent = KeybindFrame
+            
+            local KeyDisplay = CreateRoundedFrame(KeybindFrame, UDim2.new(0.35, 0, 0, 25), UDim2.new(0.65, -5, 0.5, -12.5), Theme.Secondary, 4)
+            
+            local KeyLabel = Instance.new("TextLabel")
+            KeyLabel.Size = UDim2.new(1, 0, 1, 0)
+            KeyLabel.BackgroundTransparency = 1
+            KeyLabel.Text = currentKey.Name
+            KeyLabel.TextColor3 = Theme.Text
+            KeyLabel.Font = Enum.Font.Gotham
+            KeyLabel.TextSize = 12
+            KeyLabel.Parent = KeyDisplay
+            
+            local KeyDetector = Instance.new("TextButton")
+            KeyDetector.Size = UDim2.new(1, 0, 1, 0)
+            KeyDetector.BackgroundTransparency = 1
+            KeyDetector.Text = ""
+            KeyDetector.Parent = KeyDisplay
+            
+            KeyDetector.MouseButton1Click:Connect(function()
+                listening = true
+                KeyLabel.Text = "..."
+                CreateTween(KeyDisplay, {BackgroundColor3 = Theme.Accent}, 0.2)
+            end)
+            
+            UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                if listening and input.UserInputType == Enum.UserInputType.Keyboard then
+                    currentKey = input.KeyCode
+                    KeyLabel.Text = input.KeyCode.Name
+                    listening = false
+                    CreateTween(KeyDisplay, {BackgroundColor3 = Theme.Secondary}, 0.2)
+                end
+                
+                if not gameProcessed and input.KeyCode == currentKey and not listening then
+                    callback(currentKey)
+                end
+            end)
+            
+            KeyDetector.MouseEnter:Connect(function()
+                if not listening then
+                    CreateTween(KeyDisplay, {BackgroundColor3 = Theme.Background}, 0.2)
+                end
+            end)
+            
+            KeyDetector.MouseLeave:Connect(function()
+                if not listening then
+                    CreateTween(KeyDisplay, {BackgroundColor3 = Theme.Secondary}, 0.2)
+                end
+            end)
+            
+            return {
+                SetValue = function(self, key)
+                    currentKey = key
+                    KeyLabel.Text = key.Name
+                end
+            }
         end
         
-        if not gameProcessed and input.KeyCode == currentKey and not listening then
-            callback(currentKey)
-        end
-    end)
-    
-    KeyDetector.MouseEnter:Connect(function()
-        if not listening then
-            CreateTween(KeyDisplay, {BackgroundColor3 = Theme.Background}, 0.2)
-        end
-    end)
-    
-    KeyDetector.MouseLeave:Connect(function()
-        if not listening then
-            CreateTween(KeyDisplay, {BackgroundColor3 = Theme.Secondary}, 0.2)
-        end
-    end)
-    
-    return {
-        SetValue = function(self, key)
-            currentKey = key
-            KeyLabel.Text = key.Name
-            
-            if flag then
-                Window.ConfigData[flag] = currentKey
-            end
-        end
-    }
-end
-
         return Tab
     end
     
