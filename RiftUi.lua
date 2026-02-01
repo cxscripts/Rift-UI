@@ -6,9 +6,9 @@
     ██║  ██║██║██║        ██║       ╚██████╔╝██║
     ╚═╝  ╚═╝╚═╝╚═╝        ╚═╝        ╚═════╝ ╚═╝
     
-    Rift UI - Modern Glass Executor Interface
-    Features: Glass/Blur effects, Full customization, Settings saving, All components
-    Version: 1.1.0
+    Rift UI - Professional Glass Menu Library
+    Created by Cxrter
+    Version: 2.0.0
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -18,111 +18,33 @@ local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 
 local Rift = {}
-Rift.__index = Rift
 
--- Default Theme (Fully Customizable)
-local DefaultTheme = {
-    -- Main Colors
-    Primary = Color3.fromRGB(10, 10, 10), -- Black
+-- Theme
+local Theme = {
+    Background = Color3.fromRGB(10, 10, 10),
     Secondary = Color3.fromRGB(20, 20, 20),
-    Accent = Color3.fromRGB(220, 50, 50), -- Red accent
-    AccentHover = Color3.fromRGB(240, 70, 70),
-    AccentActive = Color3.fromRGB(200, 30, 30),
-    
-    -- Text Colors
+    Tertiary = Color3.fromRGB(30, 30, 30),
+    Accent = Color3.fromRGB(220, 50, 50),
+    AccentDark = Color3.fromRGB(180, 40, 40),
     TextPrimary = Color3.fromRGB(255, 255, 255),
-    TextSecondary = Color3.fromRGB(180, 180, 190),
-    TextDisabled = Color3.fromRGB(100, 100, 110),
-    
-    -- UI Colors
-    Border = Color3.fromRGB(60, 60, 75),
-    Divider = Color3.fromRGB(40, 40, 50),
-    Success = Color3.fromRGB(75, 210, 143),
-    Warning = Color3.fromRGB(255, 195, 88),
-    Error = Color3.fromRGB(255, 89, 94),
-    Info = Color3.fromRGB(88, 166, 255),
-    
-    -- Glass Effect Settings
-    GlassTransparency = 0.3,
-    BlurIntensity = 20,
-    BorderTransparency = 0.4,
-    
-    -- Animation Settings
-    AnimationSpeed = 0.25,
-    EasingStyle = Enum.EasingStyle.Quad,
-    EasingDirection = Enum.EasingDirection.Out,
-    
-    -- Component Settings
-    CornerRadius = UDim.new(0, 8),
-    Padding = 10,
-    Spacing = 8,
-    
-    -- Font Settings
-    Font = Enum.Font.GothamMedium,
-    TitleFont = Enum.Font.GothamBold,
-    CodeFont = Enum.Font.Code,
+    TextSecondary = Color3.fromRGB(150, 150, 150),
+    Border = Color3.fromRGB(40, 40, 40),
 }
 
 -- Utility Functions
-local Utils = {}
-
-function Utils:Tween(object, properties, duration, style, direction)
-    local tweenInfo = TweenInfo.new(
-        duration or DefaultTheme.AnimationSpeed,
-        style or DefaultTheme.EasingStyle,
-        direction or DefaultTheme.EasingDirection
-    )
-    local tween = TweenService:Create(object, tweenInfo, properties)
-    tween:Play()
-    return tween
+local function Tween(obj, props, time)
+    local info = TweenInfo.new(time or 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    TweenService:Create(obj, info, props):Play()
 end
 
-function Utils:CreateElement(className, properties)
-    local element = Instance.new(className)
-    for property, value in pairs(properties) do
-        if property == "Parent" then
-            -- Set parent last to avoid unnecessary renders
-            continue
-        end
-        element[property] = value
-    end
-    if properties.Parent then
-        element.Parent = properties.Parent
-    end
-    return element
-end
-
-function Utils:ApplyGlassEffect(frame, transparency)
-    transparency = transparency or DefaultTheme.GlassTransparency
+local function MakeDraggable(frame, handle)
+    local dragging, dragInput, dragStart, startPos
     
-    frame.BackgroundTransparency = transparency
-    
-    local uiCorner = Utils:CreateElement("UICorner", {
-        CornerRadius = DefaultTheme.CornerRadius,
-        Parent = frame
-    })
-    
-    local uiStroke = Utils:CreateElement("UIStroke", {
-        Color = DefaultTheme.Border,
-        Transparency = DefaultTheme.BorderTransparency,
-        Thickness = 1,
-        Parent = frame
-    })
-    
-    return uiCorner, uiStroke
-end
-
-function Utils:MakeDraggable(frame, dragHandle)
-    local dragging = false
-    local dragInput, mousePos, framePos
-    
-    dragHandle = dragHandle or frame
-    
-    dragHandle.InputBegan:Connect(function(input)
+    handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
-            mousePos = input.Position
-            framePos = frame.Position
+            dragStart = input.Position
+            startPos = frame.Position
             
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
@@ -132,569 +54,483 @@ function Utils:MakeDraggable(frame, dragHandle)
         end
     end)
     
-    dragHandle.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
-    
     UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - mousePos
-            Utils:Tween(frame, {
-                Position = UDim2.new(
-                    framePos.X.Scale,
-                    framePos.X.Offset + delta.X,
-                    framePos.Y.Scale,
-                    framePos.Y.Offset + delta.Y
-                )
-            }, 0.1)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
         end
     end)
 end
 
-function Utils:AddBlur(intensity)
-    intensity = intensity or DefaultTheme.BlurIntensity
-    
-    local blur = Instance.new("BlurEffect")
-    blur.Size = intensity
-    blur.Parent = game:GetService("Lighting")
-    
-    return blur
-end
-
-function Utils:SaveSettings(fileName, data)
-    local success, result = pcall(function()
-        writefile(fileName, HttpService:JSONEncode(data))
-    end)
-    return success
-end
-
-function Utils:LoadSettings(fileName)
-    local success, result = pcall(function()
-        if isfile(fileName) then
-            return HttpService:JSONDecode(readfile(fileName))
-        end
-        return nil
-    end)
-    return success and result or nil
-end
-
--- Main Library Functions
+-- Main Library
 function Rift:CreateWindow(config)
     config = config or {}
-    
     local Window = {
         Tabs = {},
         CurrentTab = nil,
-        Theme = config.Theme or DefaultTheme,
-        Blur = nil,
-        Minimized = false,
         Settings = {},
-        SettingsFile = config.SettingsFile or "RiftUI_Settings.json"
+        Minimized = false,
+        Visible = true
     }
     
-    -- Create ScreenGui
-    local screenGui = Utils:CreateElement("ScreenGui", {
-        Name = "RiftUI",
-        Parent = RunService:IsStudio() and game.Players.LocalPlayer.PlayerGui or CoreGui,
-        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-        ResetOnSpawn = false,
-        IgnoreGuiInset = true
-    })
+    -- ScreenGui
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "RiftUI"
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.ResetOnSpawn = false
     
-    -- Add Blur Effect to menu only (not background)
-    -- Background blur removed - only glass effect on menu
+    if RunService:IsStudio() then
+        ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    else
+        pcall(function()
+            ScreenGui.Parent = CoreGui
+        end)
+        if not ScreenGui.Parent then
+            ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+        end
+    end
     
-    -- Main Container
-    local mainFrame = Utils:CreateElement("Frame", {
-        Name = "MainFrame",
-        Size = UDim2.new(0, config.Width or 600, 0, config.Height or 400),
-        Position = UDim2.new(0.5, -((config.Width or 600) / 2), 0.5, -((config.Height or 400) / 2)),
-        BackgroundColor3 = Window.Theme.Primary,
-        BorderSizePixel = 0,
-        Parent = screenGui
-    })
+    -- Main Frame
+    local Main = Instance.new("Frame")
+    Main.Name = "Main"
+    Main.Size = UDim2.new(0, 550, 0, 400)
+    Main.Position = UDim2.new(0.5, -275, 0.5, -200)
+    Main.BackgroundColor3 = Theme.Background
+    Main.BorderSizePixel = 0
+    Main.BackgroundTransparency = 0.1
+    Main.ClipsDescendants = true
+    Main.Parent = ScreenGui
     
-    Utils:ApplyGlassEffect(mainFrame)
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.CornerRadius = UDim.new(0, 10)
+    MainCorner.Parent = Main
     
-    -- Title Bar
-    local titleBar = Utils:CreateElement("Frame", {
-        Name = "TitleBar",
-        Size = UDim2.new(1, 0, 0, 40),
-        BackgroundColor3 = Window.Theme.Secondary,
-        BorderSizePixel = 0,
-        Parent = mainFrame
-    })
+    local MainStroke = Instance.new("UIStroke")
+    MainStroke.Color = Theme.Border
+    MainStroke.Thickness = 1
+    MainStroke.Transparency = 0.5
+    MainStroke.Parent = Main
     
-    Utils:ApplyGlassEffect(titleBar, 0.2)
+    -- Top Bar
+    local TopBar = Instance.new("Frame")
+    TopBar.Name = "TopBar"
+    TopBar.Size = UDim2.new(1, 0, 0, 45)
+    TopBar.BackgroundColor3 = Theme.Secondary
+    TopBar.BorderSizePixel = 0
+    TopBar.BackgroundTransparency = 0.2
+    TopBar.Parent = Main
     
-    -- Title Text
-    local titleLabel = Utils:CreateElement("TextLabel", {
-        Name = "Title",
-        Size = UDim2.new(1, -100, 1, 0),
-        Position = UDim2.new(0, 15, 0, 0),
-        BackgroundTransparency = 1,
-        Text = config.Title or "Rift UI",
-        TextColor3 = Window.Theme.TextPrimary,
-        TextSize = 16,
-        Font = Window.Theme.TitleFont,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = titleBar
-    })
+    local TopBarCorner = Instance.new("UICorner")
+    TopBarCorner.CornerRadius = UDim.new(0, 10)
+    TopBarCorner.Parent = TopBar
     
-    -- Control Buttons Container
-    local controlsContainer = Utils:CreateElement("Frame", {
-        Name = "Controls",
-        Size = UDim2.new(0, 80, 0, 30),
-        Position = UDim2.new(1, -90, 0, 5),
-        BackgroundTransparency = 1,
-        Parent = titleBar
-    })
+    -- Fix corner on bottom
+    local TopBarFix = Instance.new("Frame")
+    TopBarFix.Size = UDim2.new(1, 0, 0, 10)
+    TopBarFix.Position = UDim2.new(0, 0, 1, -10)
+    TopBarFix.BackgroundColor3 = Theme.Secondary
+    TopBarFix.BorderSizePixel = 0
+    TopBarFix.BackgroundTransparency = 0.2
+    TopBarFix.Parent = TopBar
+    
+    -- Title
+    local Title = Instance.new("TextLabel")
+    Title.Name = "Title"
+    Title.Size = UDim2.new(1, -100, 1, 0)
+    Title.Position = UDim2.new(0, 15, 0, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = config.Title or "Rift UI"
+    Title.TextColor3 = Theme.TextPrimary
+    Title.TextSize = 16
+    Title.Font = Enum.Font.GothamBold
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = TopBar
+    
+    -- Control Buttons
+    local ControlsFrame = Instance.new("Frame")
+    ControlsFrame.Size = UDim2.new(0, 70, 0, 25)
+    ControlsFrame.Position = UDim2.new(1, -85, 0, 10)
+    ControlsFrame.BackgroundTransparency = 1
+    ControlsFrame.Parent = TopBar
+    
+    local ControlsLayout = Instance.new("UIListLayout")
+    ControlsLayout.FillDirection = Enum.FillDirection.Horizontal
+    ControlsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    ControlsLayout.Padding = UDim.new(0, 5)
+    ControlsLayout.Parent = ControlsFrame
     
     -- Minimize Button
-    local minimizeBtn = Utils:CreateElement("TextButton", {
-        Name = "Minimize",
-        Size = UDim2.new(0, 30, 0, 30),
-        Position = UDim2.new(0, 0, 0, 0),
-        BackgroundColor3 = Window.Theme.Secondary,
-        BorderSizePixel = 0,
-        Text = "─",
-        TextColor3 = Window.Theme.TextPrimary,
-        TextSize = 14,
-        Font = Window.Theme.Font,
-        Parent = controlsContainer
-    })
+    local MinimizeBtn = Instance.new("TextButton")
+    MinimizeBtn.Name = "Minimize"
+    MinimizeBtn.Size = UDim2.new(0, 25, 0, 25)
+    MinimizeBtn.BackgroundColor3 = Theme.Tertiary
+    MinimizeBtn.BorderSizePixel = 0
+    MinimizeBtn.Text = "─"
+    MinimizeBtn.TextColor3 = Theme.TextPrimary
+    MinimizeBtn.TextSize = 14
+    MinimizeBtn.Font = Enum.Font.GothamBold
+    MinimizeBtn.Parent = ControlsFrame
     
-    Utils:ApplyGlassEffect(minimizeBtn, 0.5)
+    local MinimizeCorner = Instance.new("UICorner")
+    MinimizeCorner.CornerRadius = UDim.new(0, 5)
+    MinimizeCorner.Parent = MinimizeBtn
     
     -- Close Button
-    local closeBtn = Utils:CreateElement("TextButton", {
-        Name = "Close",
-        Size = UDim2.new(0, 30, 0, 30),
-        Position = UDim2.new(0, 40, 0, 0),
-        BackgroundColor3 = Window.Theme.Error,
-        BorderSizePixel = 0,
-        Text = "✕",
-        TextColor3 = Window.Theme.TextPrimary,
-        TextSize = 14,
-        Font = Window.Theme.Font,
-        Parent = controlsContainer
-    })
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Name = "Close"
+    CloseBtn.Size = UDim2.new(0, 25, 0, 25)
+    CloseBtn.BackgroundColor3 = Theme.Accent
+    CloseBtn.BorderSizePixel = 0
+    CloseBtn.Text = "×"
+    CloseBtn.TextColor3 = Theme.TextPrimary
+    CloseBtn.TextSize = 18
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.Parent = ControlsFrame
     
-    Utils:ApplyGlassEffect(closeBtn, 0.5)
-    
-    -- Tab Container
-    local tabContainer = Utils:CreateElement("Frame", {
-        Name = "TabContainer",
-        Size = UDim2.new(0, 150, 1, -50),
-        Position = UDim2.new(0, 10, 0, 50),
-        BackgroundTransparency = 1,
-        Parent = mainFrame
-    })
-    
-    local tabList = Utils:CreateElement("UIListLayout", {
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Padding = UDim.new(0, Window.Theme.Spacing),
-        Parent = tabContainer
-    })
+    local CloseCorner = Instance.new("UICorner")
+    CloseCorner.CornerRadius = UDim.new(0, 5)
+    CloseCorner.Parent = CloseBtn
     
     -- Content Container
-    local contentContainer = Utils:CreateElement("Frame", {
-        Name = "ContentContainer",
-        Size = UDim2.new(1, -180, 1, -60),
-        Position = UDim2.new(0, 170, 0, 50),
-        BackgroundColor3 = Window.Theme.Secondary,
-        BorderSizePixel = 0,
-        Parent = mainFrame
-    })
+    local ContentContainer = Instance.new("Frame")
+    ContentContainer.Name = "Content"
+    ContentContainer.Size = UDim2.new(1, 0, 1, -45)
+    ContentContainer.Position = UDim2.new(0, 0, 0, 45)
+    ContentContainer.BackgroundTransparency = 1
+    ContentContainer.Parent = Main
     
-    Utils:ApplyGlassEffect(contentContainer, 0.2)
+    -- Tab Buttons Container
+    local TabButtons = Instance.new("ScrollingFrame")
+    TabButtons.Name = "TabButtons"
+    TabButtons.Size = UDim2.new(0, 140, 1, -10)
+    TabButtons.Position = UDim2.new(0, 5, 0, 5)
+    TabButtons.BackgroundTransparency = 1
+    TabButtons.BorderSizePixel = 0
+    TabButtons.ScrollBarThickness = 0
+    TabButtons.CanvasSize = UDim2.new(0, 0, 0, 0)
+    TabButtons.Parent = ContentContainer
     
-    -- Make window draggable
-    Utils:MakeDraggable(mainFrame, titleBar)
+    local TabButtonsList = Instance.new("UIListLayout")
+    TabButtonsList.Padding = UDim.new(0, 5)
+    TabButtonsList.Parent = TabButtons
     
-    -- Button Interactions
-    minimizeBtn.MouseEnter:Connect(function()
-        Utils:Tween(minimizeBtn, {BackgroundColor3 = Window.Theme.Accent}, 0.15)
+    TabButtonsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        TabButtons.CanvasSize = UDim2.new(0, 0, 0, TabButtonsList.AbsoluteContentSize.Y)
     end)
     
-    minimizeBtn.MouseLeave:Connect(function()
-        Utils:Tween(minimizeBtn, {BackgroundColor3 = Window.Theme.Secondary}, 0.15)
+    -- Tab Content Container
+    local TabContent = Instance.new("Frame")
+    TabContent.Name = "TabContent"
+    TabContent.Size = UDim2.new(1, -155, 1, -10)
+    TabContent.Position = UDim2.new(0, 150, 0, 5)
+    TabContent.BackgroundTransparency = 1
+    TabContent.Parent = ContentContainer
+    
+    -- Button Hover Effects
+    MinimizeBtn.MouseEnter:Connect(function()
+        Tween(MinimizeBtn, {BackgroundColor3 = Theme.Accent}, 0.15)
     end)
     
-    minimizeBtn.MouseButton1Click:Connect(function()
+    MinimizeBtn.MouseLeave:Connect(function()
+        Tween(MinimizeBtn, {BackgroundColor3 = Theme.Tertiary}, 0.15)
+    end)
+    
+    CloseBtn.MouseEnter:Connect(function()
+        Tween(CloseBtn, {BackgroundColor3 = Theme.AccentDark}, 0.15)
+    end)
+    
+    CloseBtn.MouseLeave:Connect(function()
+        Tween(CloseBtn, {BackgroundColor3 = Theme.Accent}, 0.15)
+    end)
+    
+    -- Minimize Functionality
+    MinimizeBtn.MouseButton1Click:Connect(function()
         Window.Minimized = not Window.Minimized
         
         if Window.Minimized then
-            Utils:Tween(mainFrame, {
-                Size = UDim2.new(0, config.Width or 600, 0, 40)
-            }, 0.3)
-            minimizeBtn.Text = "□"
+            Tween(Main, {Size = UDim2.new(0, 550, 0, 45)}, 0.3)
+            MinimizeBtn.Text = "□"
         else
-            Utils:Tween(mainFrame, {
-                Size = UDim2.new(0, config.Width or 600, 0, config.Height or 400)
-            }, 0.3)
-            minimizeBtn.Text = "─"
+            Tween(Main, {Size = UDim2.new(0, 550, 0, 400)}, 0.3)
+            MinimizeBtn.Text = "─"
         end
     end)
     
-    closeBtn.MouseEnter:Connect(function()
-        Utils:Tween(closeBtn, {BackgroundColor3 = Color3.fromRGB(255, 50, 50)}, 0.15)
+    -- Close Functionality
+    CloseBtn.MouseButton1Click:Connect(function()
+        Window.Visible = false
+        Tween(Main, {Size = UDim2.new(0, 0, 0, 0)}, 0.3)
+        wait(0.3)
+        ScreenGui.Enabled = false
     end)
     
-    closeBtn.MouseLeave:Connect(function()
-        Utils:Tween(closeBtn, {BackgroundColor3 = Window.Theme.Error}, 0.15)
-    end)
-    
-    closeBtn.MouseButton1Click:Connect(function()
-        Utils:Tween(mainFrame, {
-            Size = UDim2.new(0, 0, 0, 0),
-            BackgroundTransparency = 1
-        }, 0.3)
-        
-        task.wait(0.3)
-        screenGui:Destroy()
-    end)
+    -- Make Draggable
+    MakeDraggable(Main, TopBar)
     
     -- Window Methods
+    function Window:Toggle()
+        Window.Visible = not Window.Visible
+        ScreenGui.Enabled = Window.Visible
+        
+        if Window.Visible then
+            Main.Size = UDim2.new(0, 0, 0, 0)
+            Tween(Main, {Size = Window.Minimized and UDim2.new(0, 550, 0, 45) or UDim2.new(0, 550, 0, 400)}, 0.3)
+        end
+    end
+    
     function Window:CreateTab(tabName)
         local Tab = {
             Name = tabName,
-            Elements = {},
-            Container = nil,
-            Button = nil
+            Elements = {}
         }
         
         -- Tab Button
-        local tabBtn = Utils:CreateElement("TextButton", {
-            Name = tabName,
-            Size = UDim2.new(1, 0, 0, 35),
-            BackgroundColor3 = Window.Theme.Secondary,
-            BorderSizePixel = 0,
-            Text = tabName,
-            TextColor3 = Window.Theme.TextSecondary,
-            TextSize = 14,
-            Font = Window.Theme.Font,
-            Parent = tabContainer
-        })
+        local TabBtn = Instance.new("TextButton")
+        TabBtn.Name = tabName
+        TabBtn.Size = UDim2.new(1, 0, 0, 35)
+        TabBtn.BackgroundColor3 = Theme.Secondary
+        TabBtn.BackgroundTransparency = 0.3
+        TabBtn.BorderSizePixel = 0
+        TabBtn.Text = tabName
+        TabBtn.TextColor3 = Theme.TextSecondary
+        TabBtn.TextSize = 13
+        TabBtn.Font = Enum.Font.Gotham
+        TabBtn.Parent = TabButtons
         
-        Utils:ApplyGlassEffect(tabBtn, 0.4)
+        local TabBtnCorner = Instance.new("UICorner")
+        TabBtnCorner.CornerRadius = UDim.new(0, 6)
+        TabBtnCorner.Parent = TabBtn
         
-        Tab.Button = tabBtn
+        -- Tab Page
+        local Page = Instance.new("ScrollingFrame")
+        Page.Name = tabName
+        Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.BackgroundTransparency = 1
+        Page.BorderSizePixel = 0
+        Page.ScrollBarThickness = 4
+        Page.ScrollBarImageColor3 = Theme.Accent
+        Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+        Page.Visible = false
+        Page.Parent = TabContent
         
-        -- Tab Content
-        local tabContent = Utils:CreateElement("ScrollingFrame", {
-            Name = tabName .. "_Content",
-            Size = UDim2.new(1, -20, 1, -20),
-            Position = UDim2.new(0, 10, 0, 10),
-            BackgroundTransparency = 1,
-            BorderSizePixel = 0,
-            ScrollBarThickness = 4,
-            ScrollBarImageColor3 = Window.Theme.Accent,
-            CanvasSize = UDim2.new(0, 0, 0, 0),
-            Visible = false,
-            Parent = contentContainer
-        })
+        local PageList = Instance.new("UIListLayout")
+        PageList.Padding = UDim.new(0, 6)
+        PageList.Parent = Page
         
-        local contentList = Utils:CreateElement("UIListLayout", {
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, Window.Theme.Spacing),
-            Parent = tabContent
-        })
-        
-        contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            tabContent.CanvasSize = UDim2.new(0, 0, 0, contentList.AbsoluteContentSize.Y + 20)
+        PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
         end)
         
-        Tab.Container = tabContent
-        
         -- Tab Button Click
-        tabBtn.MouseButton1Click:Connect(function()
+        TabBtn.MouseButton1Click:Connect(function()
             for _, tab in pairs(Window.Tabs) do
-                tab.Container.Visible = false
-                Utils:Tween(tab.Button, {
-                    BackgroundColor3 = Window.Theme.Secondary,
-                    TextColor3 = Window.Theme.TextSecondary
-                }, 0.2)
+                tab.Button.BackgroundTransparency = 0.3
+                tab.Button.TextColor3 = Theme.TextSecondary
+                tab.Page.Visible = false
             end
             
-            tabContent.Visible = true
-            Utils:Tween(tabBtn, {
-                BackgroundColor3 = Window.Theme.Accent,
-                TextColor3 = Window.Theme.TextPrimary
-            }, 0.2)
-            
+            TabBtn.BackgroundTransparency = 0
+            TabBtn.TextColor3 = Theme.TextPrimary
+            TabBtn.BackgroundColor3 = Theme.Accent
+            Page.Visible = true
             Window.CurrentTab = Tab
         end)
         
-        -- Tab Button Hover
-        tabBtn.MouseEnter:Connect(function()
+        -- Hover Effect
+        TabBtn.MouseEnter:Connect(function()
             if Window.CurrentTab ~= Tab then
-                Utils:Tween(tabBtn, {BackgroundColor3 = Window.Theme.AccentHover}, 0.15)
+                Tween(TabBtn, {BackgroundTransparency = 0.1}, 0.15)
             end
         end)
         
-        tabBtn.MouseLeave:Connect(function()
+        TabBtn.MouseLeave:Connect(function()
             if Window.CurrentTab ~= Tab then
-                Utils:Tween(tabBtn, {BackgroundColor3 = Window.Theme.Secondary}, 0.15)
+                Tween(TabBtn, {BackgroundTransparency = 0.3}, 0.15)
             end
         end)
         
-        -- Tab Component Methods
-        function Tab:AddButton(config)
-            config = config or {}
+        Tab.Button = TabBtn
+        Tab.Page = Page
+        
+        -- Tab Methods
+        function Tab:AddButton(text, callback)
+            local Button = Instance.new("TextButton")
+            Button.Size = UDim2.new(1, -10, 0, 35)
+            Button.BackgroundColor3 = Theme.Accent
+            Button.BackgroundTransparency = 0.1
+            Button.BorderSizePixel = 0
+            Button.Text = text
+            Button.TextColor3 = Theme.TextPrimary
+            Button.TextSize = 13
+            Button.Font = Enum.Font.Gotham
+            Button.Parent = Page
             
-            local buttonFrame = Utils:CreateElement("Frame", {
-                Name = "Button",
-                Size = UDim2.new(1, 0, 0, 40),
-                BackgroundTransparency = 1,
-                Parent = tabContent
-            })
+            local ButtonCorner = Instance.new("UICorner")
+            ButtonCorner.CornerRadius = UDim.new(0, 6)
+            ButtonCorner.Parent = Button
             
-            local button = Utils:CreateElement("TextButton", {
-                Name = config.Name or "Button",
-                Size = UDim2.new(1, -10, 1, 0),
-                BackgroundColor3 = Window.Theme.Accent,
-                BorderSizePixel = 0,
-                Text = config.Text or "Button",
-                TextColor3 = Window.Theme.TextPrimary,
-                TextSize = 14,
-                Font = Window.Theme.Font,
-                Parent = buttonFrame
-            })
-            
-            Utils:ApplyGlassEffect(button, 0.3)
-            
-            button.MouseEnter:Connect(function()
-                Utils:Tween(button, {BackgroundColor3 = Window.Theme.AccentHover}, 0.15)
+            Button.MouseEnter:Connect(function()
+                Tween(Button, {BackgroundTransparency = 0}, 0.15)
             end)
             
-            button.MouseLeave:Connect(function()
-                Utils:Tween(button, {BackgroundColor3 = Window.Theme.Accent}, 0.15)
+            Button.MouseLeave:Connect(function()
+                Tween(Button, {BackgroundTransparency = 0.1}, 0.15)
             end)
             
-            button.MouseButton1Click:Connect(function()
-                Utils:Tween(button, {BackgroundColor3 = Window.Theme.AccentActive}, 0.1)
-                task.wait(0.1)
-                Utils:Tween(button, {BackgroundColor3 = Window.Theme.AccentHover}, 0.1)
-                
-                if config.Callback then
-                    config.Callback()
-                end
+            Button.MouseButton1Click:Connect(function()
+                Tween(Button, {BackgroundColor3 = Theme.AccentDark}, 0.1)
+                wait(0.1)
+                Tween(Button, {BackgroundColor3 = Theme.Accent}, 0.1)
+                if callback then callback() end
             end)
             
-            table.insert(Tab.Elements, {Type = "Button", Object = button})
-            return button
+            return Button
         end
         
-        function Tab:AddToggle(config)
-            config = config or {}
+        function Tab:AddToggle(text, default, callback)
+            local toggled = default or false
             
-            local toggleFrame = Utils:CreateElement("Frame", {
-                Name = "Toggle",
-                Size = UDim2.new(1, 0, 0, 40),
-                BackgroundColor3 = Window.Theme.Secondary,
-                BorderSizePixel = 0,
-                Parent = tabContent
-            })
+            local ToggleFrame = Instance.new("Frame")
+            ToggleFrame.Size = UDim2.new(1, -10, 0, 35)
+            ToggleFrame.BackgroundColor3 = Theme.Secondary
+            ToggleFrame.BackgroundTransparency = 0.2
+            ToggleFrame.BorderSizePixel = 0
+            ToggleFrame.Parent = Page
             
-            Utils:ApplyGlassEffect(toggleFrame, 0.4)
+            local ToggleCorner = Instance.new("UICorner")
+            ToggleCorner.CornerRadius = UDim.new(0, 6)
+            ToggleCorner.Parent = ToggleFrame
             
-            local toggleLabel = Utils:CreateElement("TextLabel", {
-                Name = "Label",
-                Size = UDim2.new(1, -60, 1, 0),
-                Position = UDim2.new(0, 15, 0, 0),
-                BackgroundTransparency = 1,
-                Text = config.Text or "Toggle",
-                TextColor3 = Window.Theme.TextPrimary,
-                TextSize = 14,
-                Font = Window.Theme.Font,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = toggleFrame
-            })
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -50, 1, 0)
+            Label.Position = UDim2.new(0, 12, 0, 0)
+            Label.BackgroundTransparency = 1
+            Label.Text = text
+            Label.TextColor3 = Theme.TextPrimary
+            Label.TextSize = 13
+            Label.Font = Enum.Font.Gotham
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = ToggleFrame
             
-            local toggleButton = Utils:CreateElement("TextButton", {
-                Name = "ToggleButton",
-                Size = UDim2.new(0, 40, 0, 20),
-                Position = UDim2.new(1, -50, 0.5, -10),
-                BackgroundColor3 = Window.Theme.Divider,
-                BorderSizePixel = 0,
-                Text = "",
-                Parent = toggleFrame
-            })
+            local ToggleButton = Instance.new("TextButton")
+            ToggleButton.Size = UDim2.new(0, 40, 0, 20)
+            ToggleButton.Position = UDim2.new(1, -48, 0.5, -10)
+            ToggleButton.BackgroundColor3 = toggled and Theme.Accent or Theme.Tertiary
+            ToggleButton.BorderSizePixel = 0
+            ToggleButton.Text = ""
+            ToggleButton.Parent = ToggleFrame
             
-            local toggleCorner = Utils:CreateElement("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = toggleButton
-            })
+            local ToggleBtnCorner = Instance.new("UICorner")
+            ToggleBtnCorner.CornerRadius = UDim.new(1, 0)
+            ToggleBtnCorner.Parent = ToggleButton
             
-            local toggleIndicator = Utils:CreateElement("Frame", {
-                Name = "Indicator",
-                Size = UDim2.new(0, 16, 0, 16),
-                Position = UDim2.new(0, 2, 0.5, -8),
-                BackgroundColor3 = Window.Theme.TextPrimary,
-                BorderSizePixel = 0,
-                Parent = toggleButton
-            })
+            local Circle = Instance.new("Frame")
+            Circle.Size = UDim2.new(0, 16, 0, 16)
+            Circle.Position = toggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+            Circle.BackgroundColor3 = Theme.TextPrimary
+            Circle.BorderSizePixel = 0
+            Circle.Parent = ToggleButton
             
-            local indicatorCorner = Utils:CreateElement("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = toggleIndicator
-            })
+            local CircleCorner = Instance.new("UICorner")
+            CircleCorner.CornerRadius = UDim.new(1, 0)
+            CircleCorner.Parent = Circle
             
-            local toggled = config.Default or false
-            
-            local function updateToggle(state)
-                toggled = state
+            ToggleButton.MouseButton1Click:Connect(function()
+                toggled = not toggled
                 
-                if toggled then
-                    Utils:Tween(toggleButton, {BackgroundColor3 = Window.Theme.Success}, 0.2)
-                    Utils:Tween(toggleIndicator, {Position = UDim2.new(1, -18, 0.5, -8)}, 0.2)
-                else
-                    Utils:Tween(toggleButton, {BackgroundColor3 = Window.Theme.Divider}, 0.2)
-                    Utils:Tween(toggleIndicator, {Position = UDim2.new(0, 2, 0.5, -8)}, 0.2)
-                end
+                Tween(ToggleButton, {BackgroundColor3 = toggled and Theme.Accent or Theme.Tertiary}, 0.2)
+                Tween(Circle, {Position = toggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}, 0.2)
                 
-                if config.Callback then
-                    config.Callback(toggled)
-                end
-                
-                Window.Settings[config.Flag or config.Text] = toggled
-            end
-            
-            updateToggle(toggled)
-            
-            toggleButton.MouseButton1Click:Connect(function()
-                updateToggle(not toggled)
+                if callback then callback(toggled) end
             end)
             
-            table.insert(Tab.Elements, {Type = "Toggle", Object = toggleFrame, Update = updateToggle})
-            
             return {
-                SetValue = updateToggle,
+                SetValue = function(value)
+                    toggled = value
+                    ToggleButton.BackgroundColor3 = toggled and Theme.Accent or Theme.Tertiary
+                    Circle.Position = toggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+                end,
                 GetValue = function() return toggled end
             }
         end
         
-        function Tab:AddSlider(config)
-            config = config or {}
+        function Tab:AddSlider(text, min, max, default, callback)
+            local value = default or min
             
-            local sliderFrame = Utils:CreateElement("Frame", {
-                Name = "Slider",
-                Size = UDim2.new(1, 0, 0, 60),
-                BackgroundColor3 = Window.Theme.Secondary,
-                BorderSizePixel = 0,
-                Parent = tabContent
-            })
+            local SliderFrame = Instance.new("Frame")
+            SliderFrame.Size = UDim2.new(1, -10, 0, 50)
+            SliderFrame.BackgroundColor3 = Theme.Secondary
+            SliderFrame.BackgroundTransparency = 0.2
+            SliderFrame.BorderSizePixel = 0
+            SliderFrame.Parent = Page
             
-            Utils:ApplyGlassEffect(sliderFrame, 0.4)
+            local SliderCorner = Instance.new("UICorner")
+            SliderCorner.CornerRadius = UDim.new(0, 6)
+            SliderCorner.Parent = SliderFrame
             
-            local sliderLabel = Utils:CreateElement("TextLabel", {
-                Name = "Label",
-                Size = UDim2.new(1, -20, 0, 20),
-                Position = UDim2.new(0, 10, 0, 5),
-                BackgroundTransparency = 1,
-                Text = config.Text or "Slider",
-                TextColor3 = Window.Theme.TextPrimary,
-                TextSize = 14,
-                Font = Window.Theme.Font,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = sliderFrame
-            })
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -20, 0, 20)
+            Label.Position = UDim2.new(0, 12, 0, 5)
+            Label.BackgroundTransparency = 1
+            Label.Text = text
+            Label.TextColor3 = Theme.TextPrimary
+            Label.TextSize = 13
+            Label.Font = Enum.Font.Gotham
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = SliderFrame
             
-            local valueLabel = Utils:CreateElement("TextLabel", {
-                Name = "Value",
-                Size = UDim2.new(0, 50, 0, 20),
-                Position = UDim2.new(1, -60, 0, 5),
-                BackgroundTransparency = 1,
-                Text = tostring(config.Default or config.Min or 0),
-                TextColor3 = Window.Theme.Accent,
-                TextSize = 14,
-                Font = Window.Theme.Font,
-                TextXAlignment = Enum.TextXAlignment.Right,
-                Parent = sliderFrame
-            })
+            local ValueLabel = Instance.new("TextLabel")
+            ValueLabel.Size = UDim2.new(0, 50, 0, 20)
+            ValueLabel.Position = UDim2.new(1, -62, 0, 5)
+            ValueLabel.BackgroundTransparency = 1
+            ValueLabel.Text = tostring(value)
+            ValueLabel.TextColor3 = Theme.Accent
+            ValueLabel.TextSize = 13
+            ValueLabel.Font = Enum.Font.GothamBold
+            ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+            ValueLabel.Parent = SliderFrame
             
-            local sliderTrack = Utils:CreateElement("Frame", {
-                Name = "Track",
-                Size = UDim2.new(1, -20, 0, 6),
-                Position = UDim2.new(0, 10, 0, 35),
-                BackgroundColor3 = Window.Theme.Divider,
-                BorderSizePixel = 0,
-                Parent = sliderFrame
-            })
+            local SliderBack = Instance.new("Frame")
+            SliderBack.Size = UDim2.new(1, -24, 0, 4)
+            SliderBack.Position = UDim2.new(0, 12, 1, -15)
+            SliderBack.BackgroundColor3 = Theme.Tertiary
+            SliderBack.BorderSizePixel = 0
+            SliderBack.Parent = SliderFrame
             
-            local trackCorner = Utils:CreateElement("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = sliderTrack
-            })
+            local SliderBackCorner = Instance.new("UICorner")
+            SliderBackCorner.CornerRadius = UDim.new(1, 0)
+            SliderBackCorner.Parent = SliderBack
             
-            local sliderFill = Utils:CreateElement("Frame", {
-                Name = "Fill",
-                Size = UDim2.new(0, 0, 1, 0),
-                BackgroundColor3 = Window.Theme.Accent,
-                BorderSizePixel = 0,
-                Parent = sliderTrack
-            })
+            local SliderFill = Instance.new("Frame")
+            SliderFill.Size = UDim2.new((value - min) / (max - min), 0, 1, 0)
+            SliderFill.BackgroundColor3 = Theme.Accent
+            SliderFill.BorderSizePixel = 0
+            SliderFill.Parent = SliderBack
             
-            local fillCorner = Utils:CreateElement("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = sliderFill
-            })
-            
-            local sliderHandle = Utils:CreateElement("Frame", {
-                Name = "Handle",
-                Size = UDim2.new(0, 16, 0, 16),
-                Position = UDim2.new(0, -8, 0.5, -8),
-                BackgroundColor3 = Window.Theme.TextPrimary,
-                BorderSizePixel = 0,
-                Parent = sliderTrack
-            })
-            
-            local handleCorner = Utils:CreateElement("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = sliderHandle
-            })
-            
-            local min = config.Min or 0
-            local max = config.Max or 100
-            local default = config.Default or min
-            local increment = config.Increment or 1
-            local value = default
+            local SliderFillCorner = Instance.new("UICorner")
+            SliderFillCorner.CornerRadius = UDim.new(1, 0)
+            SliderFillCorner.Parent = SliderFill
             
             local dragging = false
             
-            local function updateSlider(val)
-                value = math.clamp(val, min, max)
-                value = math.floor(value / increment + 0.5) * increment
-                
-                local percent = (value - min) / (max - min)
-                
-                sliderFill.Size = UDim2.new(percent, 0, 1, 0)
-                sliderHandle.Position = UDim2.new(percent, -8, 0.5, -8)
-                valueLabel.Text = tostring(value)
-                
-                if config.Callback then
-                    config.Callback(value)
-                end
-                
-                Window.Settings[config.Flag or config.Text] = value
-            end
-            
-            sliderTrack.InputBegan:Connect(function(input)
+            SliderBack.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     dragging = true
                     
                     local function update()
-                        local mousePos = UserInputService:GetMouseLocation().X
-                        local trackPos = sliderTrack.AbsolutePosition.X
-                        local trackSize = sliderTrack.AbsoluteSize.X
+                        local mouse = UserInputService:GetMouseLocation()
+                        local percent = math.clamp((mouse.X - SliderBack.AbsolutePosition.X) / SliderBack.AbsoluteSize.X, 0, 1)
+                        value = math.floor(min + (max - min) * percent)
                         
-                        local percent = math.clamp((mousePos - trackPos) / trackSize, 0, 1)
-                        local newValue = min + (max - min) * percent
+                        SliderFill.Size = UDim2.new(percent, 0, 1, 0)
+                        ValueLabel.Text = tostring(value)
                         
-                        updateSlider(newValue)
+                        if callback then callback(value) end
                     end
                     
                     update()
@@ -706,568 +542,317 @@ function Rift:CreateWindow(config)
                         end
                     end)
                     
-                    local endConnection
-                    endConnection = UserInputService.InputEnded:Connect(function(input2)
+                    local release
+                    release = UserInputService.InputEnded:Connect(function(input2)
                         if input2.UserInputType == Enum.UserInputType.MouseButton1 then
                             dragging = false
                             connection:Disconnect()
-                            endConnection:Disconnect()
+                            release:Disconnect()
                         end
                     end)
                 end
             end)
             
-            updateSlider(value)
-            
-            table.insert(Tab.Elements, {Type = "Slider", Object = sliderFrame, Update = updateSlider})
-            
             return {
-                SetValue = updateSlider,
+                SetValue = function(val)
+                    value = math.clamp(val, min, max)
+                    local percent = (value - min) / (max - min)
+                    SliderFill.Size = UDim2.new(percent, 0, 1, 0)
+                    ValueLabel.Text = tostring(value)
+                end,
                 GetValue = function() return value end
             }
         end
         
-        function Tab:AddDropdown(config)
-            config = config or {}
-            
-            local dropdownFrame = Utils:CreateElement("Frame", {
-                Name = "Dropdown",
-                Size = UDim2.new(1, 0, 0, 40),
-                BackgroundColor3 = Window.Theme.Secondary,
-                BorderSizePixel = 0,
-                Parent = tabContent
-            })
-            
-            Utils:ApplyGlassEffect(dropdownFrame, 0.4)
-            
-            local dropdownLabel = Utils:CreateElement("TextLabel", {
-                Name = "Label",
-                Size = UDim2.new(0.5, -10, 1, 0),
-                Position = UDim2.new(0, 10, 0, 0),
-                BackgroundTransparency = 1,
-                Text = config.Text or "Dropdown",
-                TextColor3 = Window.Theme.TextPrimary,
-                TextSize = 14,
-                Font = Window.Theme.Font,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = dropdownFrame
-            })
-            
-            local dropdownButton = Utils:CreateElement("TextButton", {
-                Name = "Button",
-                Size = UDim2.new(0.5, -20, 0, 30),
-                Position = UDim2.new(0.5, 10, 0, 5),
-                BackgroundColor3 = Window.Theme.Divider,
-                BorderSizePixel = 0,
-                Text = config.Default or (config.Options and config.Options[1]) or "Select",
-                TextColor3 = Window.Theme.TextPrimary,
-                TextSize = 13,
-                Font = Window.Theme.Font,
-                Parent = dropdownFrame
-            })
-            
-            Utils:ApplyGlassEffect(dropdownButton, 0.3)
-            
-            local dropdownIcon = Utils:CreateElement("TextLabel", {
-                Name = "Icon",
-                Size = UDim2.new(0, 20, 1, 0),
-                Position = UDim2.new(1, -25, 0, 0),
-                BackgroundTransparency = 1,
-                Text = "▼",
-                TextColor3 = Window.Theme.TextSecondary,
-                TextSize = 10,
-                Font = Window.Theme.Font,
-                Parent = dropdownButton
-            })
-            
-            local dropdownList = Utils:CreateElement("ScrollingFrame", {
-                Name = "List",
-                Size = UDim2.new(0.5, -20, 0, 0),
-                Position = UDim2.new(0.5, 10, 1, 5),
-                BackgroundColor3 = Window.Theme.Secondary,
-                BorderSizePixel = 0,
-                ScrollBarThickness = 4,
-                ScrollBarImageColor3 = Window.Theme.Accent,
-                Visible = false,
-                ZIndex = 10,
-                Parent = dropdownFrame
-            })
-            
-            Utils:ApplyGlassEffect(dropdownList, 0.2)
-            
-            local listLayout = Utils:CreateElement("UIListLayout", {
-                SortOrder = Enum.SortOrder.LayoutOrder,
-                Padding = UDim.new(0, 2),
-                Parent = dropdownList
-            })
-            
-            local selected = config.Default or (config.Options and config.Options[1])
+        function Tab:AddDropdown(text, options, default, callback)
+            local selected = default or options[1]
             local open = false
             
-            local function updateOptions()
-                dropdownList:ClearAllChildren()
+            local DropdownFrame = Instance.new("Frame")
+            DropdownFrame.Size = UDim2.new(1, -10, 0, 35)
+            DropdownFrame.BackgroundColor3 = Theme.Secondary
+            DropdownFrame.BackgroundTransparency = 0.2
+            DropdownFrame.BorderSizePixel = 0
+            DropdownFrame.Parent = Page
+            DropdownFrame.ClipsDescendants = false
+            
+            local DropdownCorner = Instance.new("UICorner")
+            DropdownCorner.CornerRadius = UDim.new(0, 6)
+            DropdownCorner.Parent = DropdownFrame
+            
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(0.5, -12, 1, 0)
+            Label.Position = UDim2.new(0, 12, 0, 0)
+            Label.BackgroundTransparency = 1
+            Label.Text = text
+            Label.TextColor3 = Theme.TextPrimary
+            Label.TextSize = 13
+            Label.Font = Enum.Font.Gotham
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = DropdownFrame
+            
+            local DropdownBtn = Instance.new("TextButton")
+            DropdownBtn.Size = UDim2.new(0.5, -16, 0, 28)
+            DropdownBtn.Position = UDim2.new(0.5, 4, 0, 3.5)
+            DropdownBtn.BackgroundColor3 = Theme.Tertiary
+            DropdownBtn.BorderSizePixel = 0
+            DropdownBtn.Text = selected
+            DropdownBtn.TextColor3 = Theme.TextPrimary
+            DropdownBtn.TextSize = 12
+            DropdownBtn.Font = Enum.Font.Gotham
+            DropdownBtn.Parent = DropdownFrame
+            
+            local DropdownBtnCorner = Instance.new("UICorner")
+            DropdownBtnCorner.CornerRadius = UDim.new(0, 5)
+            DropdownBtnCorner.Parent = DropdownBtn
+            
+            local OptionsList = Instance.new("Frame")
+            OptionsList.Size = UDim2.new(0.5, -16, 0, 0)
+            OptionsList.Position = UDim2.new(0.5, 4, 1, 5)
+            OptionsList.BackgroundColor3 = Theme.Secondary
+            OptionsList.BorderSizePixel = 0
+            OptionsList.ClipsDescendants = true
+            OptionsList.Visible = false
+            OptionsList.ZIndex = 10
+            OptionsList.Parent = DropdownFrame
+            
+            local OptionsCorner = Instance.new("UICorner")
+            OptionsCorner.CornerRadius = UDim.new(0, 5)
+            OptionsCorner.Parent = OptionsList
+            
+            local OptionsLayout = Instance.new("UIListLayout")
+            OptionsLayout.Padding = UDim.new(0, 2)
+            OptionsLayout.Parent = OptionsList
+            
+            for _, option in ipairs(options) do
+                local OptionBtn = Instance.new("TextButton")
+                OptionBtn.Size = UDim2.new(1, -4, 0, 25)
+                OptionBtn.Position = UDim2.new(0, 2, 0, 0)
+                OptionBtn.BackgroundColor3 = Theme.Tertiary
+                OptionBtn.BackgroundTransparency = 0.5
+                OptionBtn.BorderSizePixel = 0
+                OptionBtn.Text = option
+                OptionBtn.TextColor3 = Theme.TextPrimary
+                OptionBtn.TextSize = 11
+                OptionBtn.Font = Enum.Font.Gotham
+                OptionBtn.Parent = OptionsList
                 
-                local listLayout = Utils:CreateElement("UIListLayout", {
-                    SortOrder = Enum.SortOrder.LayoutOrder,
-                    Padding = UDim.new(0, 2),
-                    Parent = dropdownList
-                })
+                local OptionCorner = Instance.new("UICorner")
+                OptionCorner.CornerRadius = UDim.new(0, 4)
+                OptionCorner.Parent = OptionBtn
                 
-                for _, option in ipairs(config.Options or {}) do
-                    local optionBtn = Utils:CreateElement("TextButton", {
-                        Name = option,
-                        Size = UDim2.new(1, -10, 0, 30),
-                        BackgroundColor3 = Window.Theme.Divider,
-                        BorderSizePixel = 0,
-                        Text = option,
-                        TextColor3 = Window.Theme.TextPrimary,
-                        TextSize = 13,
-                        Font = Window.Theme.Font,
-                        Parent = dropdownList
-                    })
-                    
-                    Utils:ApplyGlassEffect(optionBtn, 0.5)
-                    
-                    optionBtn.MouseEnter:Connect(function()
-                        Utils:Tween(optionBtn, {BackgroundColor3 = Window.Theme.Accent}, 0.15)
-                    end)
-                    
-                    optionBtn.MouseLeave:Connect(function()
-                        Utils:Tween(optionBtn, {BackgroundColor3 = Window.Theme.Divider}, 0.15)
-                    end)
-                    
-                    optionBtn.MouseButton1Click:Connect(function()
-                        selected = option
-                        dropdownButton.Text = option
-                        
-                        Utils:Tween(dropdownList, {Size = UDim2.new(0.5, -20, 0, 0)}, 0.2)
-                        task.wait(0.2)
-                        dropdownList.Visible = false
-                        open = false
-                        
-                        Utils:Tween(dropdownIcon, {Rotation = 0}, 0.2)
-                        
-                        if config.Callback then
-                            config.Callback(option)
-                        end
-                        
-                        Window.Settings[config.Flag or config.Text] = option
-                    end)
-                end
+                OptionBtn.MouseEnter:Connect(function()
+                    Tween(OptionBtn, {BackgroundColor3 = Theme.Accent}, 0.15)
+                end)
                 
-                local contentSize = listLayout.AbsoluteContentSize.Y
-                dropdownList.CanvasSize = UDim2.new(0, 0, 0, contentSize)
+                OptionBtn.MouseLeave:Connect(function()
+                    Tween(OptionBtn, {BackgroundColor3 = Theme.Tertiary}, 0.15)
+                end)
+                
+                OptionBtn.MouseButton1Click:Connect(function()
+                    selected = option
+                    DropdownBtn.Text = option
+                    open = false
+                    Tween(OptionsList, {Size = UDim2.new(0.5, -16, 0, 0)}, 0.2)
+                    task.wait(0.2)
+                    OptionsList.Visible = false
+                    if callback then callback(option) end
+                end)
             end
             
-            updateOptions()
-            
-            dropdownButton.MouseButton1Click:Connect(function()
+            DropdownBtn.MouseButton1Click:Connect(function()
                 open = not open
                 
                 if open then
-                    local maxHeight = 150
-                    local contentHeight = math.min(listLayout.AbsoluteContentSize.Y + 10, maxHeight)
-                    
-                    dropdownList.Visible = true
-                    Utils:Tween(dropdownList, {Size = UDim2.new(0.5, -20, 0, contentHeight)}, 0.2)
-                    Utils:Tween(dropdownIcon, {Rotation = 180}, 0.2)
+                    local height = math.min(#options * 27, 150)
+                    OptionsList.Visible = true
+                    Tween(OptionsList, {Size = UDim2.new(0.5, -16, 0, height)}, 0.2)
                 else
-                    Utils:Tween(dropdownList, {Size = UDim2.new(0.5, -20, 0, 0)}, 0.2)
-                    Utils:Tween(dropdownIcon, {Rotation = 0}, 0.2)
+                    Tween(OptionsList, {Size = UDim2.new(0.5, -16, 0, 0)}, 0.2)
                     task.wait(0.2)
-                    dropdownList.Visible = false
+                    OptionsList.Visible = false
                 end
             end)
-            
-            table.insert(Tab.Elements, {Type = "Dropdown", Object = dropdownFrame, Update = updateOptions})
-            
-            return {
-                SetValue = function(val)
-                    selected = val
-                    dropdownButton.Text = val
-                end,
-                GetValue = function() return selected end,
-                UpdateOptions = function(newOptions)
-                    config.Options = newOptions
-                    updateOptions()
-                end
-            }
         end
         
-        function Tab:AddTextbox(config)
-            config = config or {}
+        function Tab:AddTextbox(text, placeholder, callback)
+            local TextboxFrame = Instance.new("Frame")
+            TextboxFrame.Size = UDim2.new(1, -10, 0, 50)
+            TextboxFrame.BackgroundColor3 = Theme.Secondary
+            TextboxFrame.BackgroundTransparency = 0.2
+            TextboxFrame.BorderSizePixel = 0
+            TextboxFrame.Parent = Page
             
-            local textboxFrame = Utils:CreateElement("Frame", {
-                Name = "Textbox",
-                Size = UDim2.new(1, 0, 0, 60),
-                BackgroundColor3 = Window.Theme.Secondary,
-                BorderSizePixel = 0,
-                Parent = tabContent
-            })
+            local TextboxCorner = Instance.new("UICorner")
+            TextboxCorner.CornerRadius = UDim.new(0, 6)
+            TextboxCorner.Parent = TextboxFrame
             
-            Utils:ApplyGlassEffect(textboxFrame, 0.4)
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -20, 0, 20)
+            Label.Position = UDim2.new(0, 12, 0, 5)
+            Label.BackgroundTransparency = 1
+            Label.Text = text
+            Label.TextColor3 = Theme.TextPrimary
+            Label.TextSize = 13
+            Label.Font = Enum.Font.Gotham
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = TextboxFrame
             
-            local textboxLabel = Utils:CreateElement("TextLabel", {
-                Name = "Label",
-                Size = UDim2.new(1, -20, 0, 20),
-                Position = UDim2.new(0, 10, 0, 5),
-                BackgroundTransparency = 1,
-                Text = config.Text or "Textbox",
-                TextColor3 = Window.Theme.TextPrimary,
-                TextSize = 14,
-                Font = Window.Theme.Font,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = textboxFrame
-            })
+            local Textbox = Instance.new("TextBox")
+            Textbox.Size = UDim2.new(1, -24, 0, 22)
+            Textbox.Position = UDim2.new(0, 12, 1, -27)
+            Textbox.BackgroundColor3 = Theme.Tertiary
+            Textbox.BorderSizePixel = 0
+            Textbox.Text = ""
+            Textbox.PlaceholderText = placeholder or "Enter text..."
+            Textbox.TextColor3 = Theme.TextPrimary
+            Textbox.PlaceholderColor3 = Theme.TextSecondary
+            Textbox.TextSize = 12
+            Textbox.Font = Enum.Font.Gotham
+            Textbox.ClearTextOnFocus = false
+            Textbox.Parent = TextboxFrame
             
-            local textbox = Utils:CreateElement("TextBox", {
-                Name = "Input",
-                Size = UDim2.new(1, -20, 0, 30),
-                Position = UDim2.new(0, 10, 0, 25),
-                BackgroundColor3 = Window.Theme.Divider,
-                BorderSizePixel = 0,
-                Text = config.Default or "",
-                PlaceholderText = config.Placeholder or "Enter text...",
-                TextColor3 = Window.Theme.TextPrimary,
-                PlaceholderColor3 = Window.Theme.TextDisabled,
-                TextSize = 13,
-                Font = Window.Theme.Font,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                ClearTextOnFocus = false,
-                Parent = textboxFrame
-            })
+            local TextboxCorner2 = Instance.new("UICorner")
+            TextboxCorner2.CornerRadius = UDim.new(0, 4)
+            TextboxCorner2.Parent = Textbox
             
-            Utils:ApplyGlassEffect(textbox, 0.3)
+            local TextboxPadding = Instance.new("UIPadding")
+            TextboxPadding.PaddingLeft = UDim.new(0, 8)
+            TextboxPadding.PaddingRight = UDim.new(0, 8)
+            TextboxPadding.Parent = Textbox
             
-            local textboxPadding = Utils:CreateElement("UIPadding", {
-                PaddingLeft = UDim.new(0, 10),
-                PaddingRight = UDim.new(0, 10),
-                Parent = textbox
-            })
-            
-            textbox.FocusLost:Connect(function(enterPressed)
-                if config.Callback then
-                    config.Callback(textbox.Text)
-                end
-                
-                Window.Settings[config.Flag or config.Text] = textbox.Text
+            Textbox.FocusLost:Connect(function()
+                if callback then callback(Textbox.Text) end
             end)
-            
-            table.insert(Tab.Elements, {Type = "Textbox", Object = textboxFrame})
             
             return {
-                SetValue = function(val)
-                    textbox.Text = val
-                end,
-                GetValue = function() return textbox.Text end
-            }
-        end
-        
-        function Tab:AddKeybind(config)
-            config = config or {}
-            
-            local keybindFrame = Utils:CreateElement("Frame", {
-                Name = "Keybind",
-                Size = UDim2.new(1, 0, 0, 40),
-                BackgroundColor3 = Window.Theme.Secondary,
-                BorderSizePixel = 0,
-                Parent = tabContent
-            })
-            
-            Utils:ApplyGlassEffect(keybindFrame, 0.4)
-            
-            local keybindLabel = Utils:CreateElement("TextLabel", {
-                Name = "Label",
-                Size = UDim2.new(0.6, -10, 1, 0),
-                Position = UDim2.new(0, 10, 0, 0),
-                BackgroundTransparency = 1,
-                Text = config.Text or "Keybind",
-                TextColor3 = Window.Theme.TextPrimary,
-                TextSize = 14,
-                Font = Window.Theme.Font,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = keybindFrame
-            })
-            
-            local keybindButton = Utils:CreateElement("TextButton", {
-                Name = "Button",
-                Size = UDim2.new(0.4, -20, 0, 30),
-                Position = UDim2.new(0.6, 10, 0, 5),
-                BackgroundColor3 = Window.Theme.Divider,
-                BorderSizePixel = 0,
-                Text = config.Default and config.Default.Name or "None",
-                TextColor3 = Window.Theme.TextPrimary,
-                TextSize = 13,
-                Font = Window.Theme.Font,
-                Parent = keybindFrame
-            })
-            
-            Utils:ApplyGlassEffect(keybindButton, 0.3)
-            
-            local currentKey = config.Default
-            local listening = false
-            
-            keybindButton.MouseButton1Click:Connect(function()
-                listening = true
-                keybindButton.Text = "..."
-                Utils:Tween(keybindButton, {BackgroundColor3 = Window.Theme.Accent}, 0.15)
-            end)
-            
-            UserInputService.InputBegan:Connect(function(input, gameProcessed)
-                if listening then
-                    if input.UserInputType == Enum.UserInputType.Keyboard then
-                        currentKey = input.KeyCode
-                        keybindButton.Text = input.KeyCode.Name
-                        listening = false
-                        Utils:Tween(keybindButton, {BackgroundColor3 = Window.Theme.Divider}, 0.15)
-                        
-                        Window.Settings[config.Flag or config.Text] = input.KeyCode.Name
-                    end
-                elseif currentKey and input.KeyCode == currentKey and not gameProcessed then
-                    if config.Callback then
-                        config.Callback()
-                    end
-                end
-            end)
-            
-            table.insert(Tab.Elements, {Type = "Keybind", Object = keybindFrame})
-            
-            return {
-                SetValue = function(key)
-                    currentKey = key
-                    keybindButton.Text = key.Name
-                end,
-                GetValue = function() return currentKey end
-            }
-        end
-        
-        function Tab:AddColorPicker(config)
-            config = config or {}
-            
-            local pickerFrame = Utils:CreateElement("Frame", {
-                Name = "ColorPicker",
-                Size = UDim2.new(1, 0, 0, 40),
-                BackgroundColor3 = Window.Theme.Secondary,
-                BorderSizePixel = 0,
-                Parent = tabContent
-            })
-            
-            Utils:ApplyGlassEffect(pickerFrame, 0.4)
-            
-            local pickerLabel = Utils:CreateElement("TextLabel", {
-                Name = "Label",
-                Size = UDim2.new(0.7, -10, 1, 0),
-                Position = UDim2.new(0, 10, 0, 0),
-                BackgroundTransparency = 1,
-                Text = config.Text or "Color Picker",
-                TextColor3 = Window.Theme.TextPrimary,
-                TextSize = 14,
-                Font = Window.Theme.Font,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = pickerFrame
-            })
-            
-            local colorDisplay = Utils:CreateElement("TextButton", {
-                Name = "Display",
-                Size = UDim2.new(0, 60, 0, 30),
-                Position = UDim2.new(1, -70, 0, 5),
-                BackgroundColor3 = config.Default or Color3.fromRGB(255, 255, 255),
-                BorderSizePixel = 0,
-                Text = "",
-                Parent = pickerFrame
-            })
-            
-            Utils:ApplyGlassEffect(colorDisplay, 0.2)
-            
-            local currentColor = config.Default or Color3.fromRGB(255, 255, 255)
-            
-            -- Simple color picker (you can expand this with a full HSV picker)
-            colorDisplay.MouseButton1Click:Connect(function()
-                -- This is a simplified version - you can create a full color picker UI here
-                if config.Callback then
-                    config.Callback(currentColor)
-                end
-            end)
-            
-            table.insert(Tab.Elements, {Type = "ColorPicker", Object = pickerFrame})
-            
-            return {
-                SetValue = function(color)
-                    currentColor = color
-                    colorDisplay.BackgroundColor3 = color
-                end,
-                GetValue = function() return currentColor end
+                SetValue = function(val) Textbox.Text = val end,
+                GetValue = function() return Textbox.Text end
             }
         end
         
         function Tab:AddLabel(text)
-            local labelFrame = Utils:CreateElement("Frame", {
-                Name = "Label",
-                Size = UDim2.new(1, 0, 0, 30),
-                BackgroundTransparency = 1,
-                Parent = tabContent
-            })
-            
-            local label = Utils:CreateElement("TextLabel", {
-                Name = "Text",
-                Size = UDim2.new(1, -20, 1, 0),
-                Position = UDim2.new(0, 10, 0, 0),
-                BackgroundTransparency = 1,
-                Text = text or "Label",
-                TextColor3 = Window.Theme.TextSecondary,
-                TextSize = 13,
-                Font = Window.Theme.Font,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                TextWrapped = true,
-                Parent = labelFrame
-            })
-            
-            table.insert(Tab.Elements, {Type = "Label", Object = labelFrame})
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -10, 0, 25)
+            Label.BackgroundTransparency = 1
+            Label.Text = text
+            Label.TextColor3 = Theme.TextSecondary
+            Label.TextSize = 12
+            Label.Font = Enum.Font.Gotham
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.TextWrapped = true
+            Label.Parent = Page
             
             return {
-                SetText = function(newText)
-                    label.Text = newText
-                end
+                SetText = function(txt) Label.Text = txt end
             }
         end
         
         function Tab:AddDivider()
-            local divider = Utils:CreateElement("Frame", {
-                Name = "Divider",
-                Size = UDim2.new(1, -20, 0, 1),
-                BackgroundColor3 = Window.Theme.Divider,
-                BorderSizePixel = 0,
-                Parent = tabContent
-            })
-            
-            table.insert(Tab.Elements, {Type = "Divider", Object = divider})
+            local Divider = Instance.new("Frame")
+            Divider.Size = UDim2.new(1, -20, 0, 1)
+            Divider.BackgroundColor3 = Theme.Border
+            Divider.BorderSizePixel = 0
+            Divider.Parent = Page
         end
         
         table.insert(Window.Tabs, Tab)
         
-        -- Select first tab by default
+        -- Auto-select first tab
         if #Window.Tabs == 1 then
-            tabBtn.MouseButton1Click:Fire()
+            TabBtn.MouseButton1Click:Fire()
         end
         
         return Tab
     end
     
-    function Window:CreateNotification(config)
-        config = config or {}
+    function Window:Notify(title, text, duration)
+        duration = duration or 3
         
-        local notifContainer = Utils:CreateElement("Frame", {
-            Name = "Notification",
-            Size = UDim2.new(0, 300, 0, 0),
-            Position = UDim2.new(1, -320, 1, -20),
-            BackgroundColor3 = Window.Theme.Secondary,
-            BorderSizePixel = 0,
-            Parent = screenGui,
-            ZIndex = 100
-        })
+        local Notification = Instance.new("Frame")
+        Notification.Size = UDim2.new(0, 0, 0, 0)
+        Notification.Position = UDim2.new(1, -10, 1, -10)
+        Notification.AnchorPoint = Vector2.new(1, 1)
+        Notification.BackgroundColor3 = Theme.Secondary
+        Notification.BackgroundTransparency = 0.1
+        Notification.BorderSizePixel = 0
+        Notification.Parent = ScreenGui
         
-        Utils:ApplyGlassEffect(notifContainer, 0.2)
+        local NotifCorner = Instance.new("UICorner")
+        NotifCorner.CornerRadius = UDim.new(0, 8)
+        NotifCorner.Parent = Notification
         
-        local notifTitle = Utils:CreateElement("TextLabel", {
-            Name = "Title",
-            Size = UDim2.new(1, -20, 0, 25),
-            Position = UDim2.new(0, 10, 0, 10),
-            BackgroundTransparency = 1,
-            Text = config.Title or "Notification",
-            TextColor3 = Window.Theme.TextPrimary,
-            TextSize = 14,
-            Font = Window.Theme.TitleFont,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = notifContainer
-        })
+        local NotifStroke = Instance.new("UIStroke")
+        NotifStroke.Color = Theme.Accent
+        NotifStroke.Thickness = 1
+        NotifStroke.Transparency = 0.5
+        NotifStroke.Parent = Notification
         
-        local notifContent = Utils:CreateElement("TextLabel", {
-            Name = "Content",
-            Size = UDim2.new(1, -20, 0, 0),
-            Position = UDim2.new(0, 10, 0, 40),
-            BackgroundTransparency = 1,
-            Text = config.Content or "",
-            TextColor3 = Window.Theme.TextSecondary,
-            TextSize = 12,
-            Font = Window.Theme.Font,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextYAlignment = Enum.TextYAlignment.Top,
-            TextWrapped = true,
-            Parent = notifContainer
-        })
+        local NotifTitle = Instance.new("TextLabel")
+        NotifTitle.Size = UDim2.new(1, -20, 0, 20)
+        NotifTitle.Position = UDim2.new(0, 10, 0, 8)
+        NotifTitle.BackgroundTransparency = 1
+        NotifTitle.Text = title
+        NotifTitle.TextColor3 = Theme.TextPrimary
+        NotifTitle.TextSize = 14
+        NotifTitle.Font = Enum.Font.GothamBold
+        NotifTitle.TextXAlignment = Enum.TextXAlignment.Left
+        NotifTitle.Parent = Notification
         
-        -- Calculate content height
-        local textService = game:GetService("TextService")
-        local textSize = textService:GetTextSize(
-            config.Content or "",
-            12,
-            Window.Theme.Font,
-            Vector2.new(280, math.huge)
+        local NotifText = Instance.new("TextLabel")
+        NotifText.Size = UDim2.new(1, -20, 1, -30)
+        NotifText.Position = UDim2.new(0, 10, 0, 25)
+        NotifText.BackgroundTransparency = 1
+        NotifText.Text = text
+        NotifText.TextColor3 = Theme.TextSecondary
+        NotifText.TextSize = 12
+        NotifText.Font = Enum.Font.Gotham
+        NotifText.TextXAlignment = Enum.TextXAlignment.Left
+        NotifText.TextYAlignment = Enum.TextYAlignment.Top
+        NotifText.TextWrapped = true
+        NotifText.Parent = Notification
+        
+        local textSize = game:GetService("TextService"):GetTextSize(
+            text, 12, Enum.Font.Gotham, Vector2.new(270, math.huge)
         )
         
-        notifContent.Size = UDim2.new(1, -20, 0, textSize.Y)
+        local height = math.max(60, textSize.Y + 40)
         
-        local totalHeight = 60 + textSize.Y
-        
-        -- Animate in
-        Utils:Tween(notifContainer, {
-            Size = UDim2.new(0, 300, 0, totalHeight),
-            Position = UDim2.new(1, -320, 1, -(totalHeight + 20))
+        Tween(Notification, {
+            Size = UDim2.new(0, 280, 0, height),
+            Position = UDim2.new(1, -10, 1, -height - 10)
         }, 0.3)
         
-        -- Auto dismiss
-        local duration = config.Duration or 3
         task.delay(duration, function()
-            Utils:Tween(notifContainer, {
-                Position = UDim2.new(1, -320, 1, -20),
-                Size = UDim2.new(0, 300, 0, 0)
+            Tween(Notification, {
+                Position = UDim2.new(1, -10, 1, -10),
+                Size = UDim2.new(0, 0, 0, 0)
             }, 0.3)
-            
             task.wait(0.3)
-            notifContainer:Destroy()
+            Notification:Destroy()
         end)
     end
     
     function Window:SaveSettings()
-        return Utils:SaveSettings(Window.SettingsFile, Window.Settings)
+        local success = pcall(function()
+            writefile(config.SettingsFile or "RiftSettings.json", HttpService:JSONEncode(Window.Settings))
+        end)
+        return success
     end
     
     function Window:LoadSettings()
-        local settings = Utils:LoadSettings(Window.SettingsFile)
-        if settings then
-            Window.Settings = settings
-            
-            -- Apply loaded settings to components
-            for _, tab in pairs(Window.Tabs) do
-                for _, element in pairs(tab.Elements) do
-                    local flag = element.Config and element.Config.Flag
-                    if flag and Window.Settings[flag] ~= nil then
-                        if element.Update then
-                            element.Update(Window.Settings[flag])
-                        end
-                    end
-                end
+        local success, data = pcall(function()
+            if isfile and isfile(config.SettingsFile or "RiftSettings.json") then
+                return HttpService:JSONDecode(readfile(config.SettingsFile or "RiftSettings.json"))
             end
-        end
-    end
-    
-    function Window:SetTheme(newTheme)
-        for key, value in pairs(newTheme) do
-            Window.Theme[key] = value
-        end
+        end)
         
-        -- Update UI colors (you can expand this to update all elements)
-        mainFrame.BackgroundColor3 = Window.Theme.Primary
-        titleBar.BackgroundColor3 = Window.Theme.Secondary
-        contentContainer.BackgroundColor3 = Window.Theme.Secondary
-    end
-    
-    function Window:Destroy()
-        screenGui:Destroy()
+        if success and data then
+            Window.Settings = data
+        end
     end
     
     return Window
 end
 
--- Export library
 return Rift
