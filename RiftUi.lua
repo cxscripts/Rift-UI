@@ -8,7 +8,7 @@
     
     Rift UI - Modern Glass Executor Interface
     Features: Glass/Blur effects, Full customization, Settings saving, All components
-    Version: 1.0.0
+    Version: 1.1.0
 ]]
 
 local TweenService = game:GetService("TweenService")
