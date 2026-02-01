@@ -20,11 +20,12 @@ local Players = game:GetService("Players")
 -- Configuration
 local Config = {
     -- Valid keys (add your keys here)
-    ValidKeys = {
-        "CXRIFT",
-        "RIFT",
-        "JOSE"
-    },
+   ValidKeys = {
+    "MyScript2024",
+    "PREMIUM-USER-123",
+    "alex-key-2024",
+    "test123"
+},
     
     -- HWID locked keys (optional)
     -- Format: ["KEY"] = "HWID"
