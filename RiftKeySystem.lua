@@ -34,7 +34,7 @@ local Config = {
     },
     
     -- Settings
-    KeyLength = 20, -- Expected key length (set to 0 to disable length check)
+    KeyLength = 0, -- Expected key length (set to 0 to disable length check)
     MaxAttempts = 5, -- Maximum failed attempts before lockout
     LockoutDuration = 300, -- Lockout duration in seconds (5 minutes)
     SaveKey = true, -- Save valid key for future sessions
